@@ -66,6 +66,9 @@ class express:
                 if len(data) < self.bytes_to_receive : break
 
             data = b"".join(chunks).decode("utf-8")
+            if len(data) == 0:
+                client_socket.close()
+                continue
             
             self.handleConnection(client_socket, data, client_address)
 
