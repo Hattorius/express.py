@@ -97,3 +97,18 @@ class express:
 
     def get(self, route, fun, *middleware):
         self.route("GET", route, fun, *middleware)
+
+    def post(self, route, fun, *middleware):
+        self.route("POST", route, fun, *middleware)
+
+    def head(self, route, fun, *middleware):
+        self.route("HEAD", route, fun, *middleware)
+
+    def put(self, route, fun, *middleware):
+        self.route("PUT", route, fun, *middleware)
+
+    def delete(self, route, fun, *middleware):
+        self.route("DELETE", route, fun, *middleware)
+
+    def patch(self, route, fun, *middleware):
+        self.route("PATCH", route, fun, *middleware)

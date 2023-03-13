@@ -1,4 +1,4 @@
-import re
+import re, json
 
 from express.helpers import url_parse
 
@@ -17,7 +17,12 @@ class Request:
         self.app = app
         self.ip = client_address[0]
 
-        headers, self.body = data.split('\r\n\r\n', 1)
+        splitted = data.split('\r\n\r\n', 1)
+        headers = splitted[0]
+        self.body = ""
+        if len(splitted) > 1:
+            self.body = splitted[1]
+        self.json = None
         headers = headers.split("\r\n")
 
         header = headers[0].split(" ")
@@ -73,6 +78,11 @@ class Request:
             for i, item in enumerate(re.search(self.matchRoute, self.url).groups()):
                 self.params[self.matches[i]] = item
                 setattr(self.params, self.matches[i], item)
+
+    def json(self):
+        if self.json is None:
+            self.json = json.loads(self.body)
+        return self.json
 
     def header(self, name):
         try:

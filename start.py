@@ -22,6 +22,9 @@ def serveFile(request, response):
 def badRequest(request, response):
     response.status(400).send("Bad Request!")
 
+def omgitspost(request, response):
+    response.send("hi")
+
 
 def someMiddleware(request, response):
     request.hi = "Hello"
@@ -31,5 +34,6 @@ app.get("/:userId/:postId/comment", get, someMiddleware)
 app.get("/:userId/:postId/", redirectToComment)
 app.get("/file", serveFile)
 app.get("/bad", badRequest)
+app.post("/", omgitspost)
 
 app.listen()
