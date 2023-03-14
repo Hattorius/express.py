@@ -42,4 +42,9 @@ app.all("/hihi", omgitspost)
 def hello(request, response):
     response.send("hi")
 
+@app.get("/test")
+@app.head("/test")
+def test(request, response):
+    response.send("Hiii!!!")
+
 app.listen()

@@ -1,4 +1,4 @@
-import socket, re
+import socket, re, traceback
 
 from express.request import Request
 from express.response import Response
@@ -27,6 +27,7 @@ class express:
                 name = part.split(":")[1]
 
                 if name in matches:
+                    print(traceback.format_exc())
                     print("Method: %s" % method)
                     print("Route: %s" % originalRoute)
                     print("Parameter: %s" % name)
@@ -75,6 +76,7 @@ class express:
             try:
                 self._listen(port, backlog)
             except Exception as e:
+                print(traceback.format_exc())
                 print("Error!")
                 print(e)
                 pass
@@ -104,6 +106,7 @@ class express:
                     continue_to_route = False
                     break
             except Exception as e:
+                print(traceback.format_exc())
                 print("Error!")
                 print(e)
                 return self.error(response)
@@ -112,6 +115,7 @@ class express:
             try:
                 request.fun(request, response)
             except Exception as e:
+                print(traceback.format_exc())
                 print("Error!")
                 print(e)
                 return self.error(response)
@@ -124,8 +128,9 @@ class express:
             middleware = [middleware]
 
         if fun is None:
-            def get(function):
+            def get(function, *theRest):
                 self._route(method, route, function, *middleware)
+                return function
             return get
         self._route(method, route, fun, *middleware)
 
