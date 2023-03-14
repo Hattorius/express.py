@@ -16,6 +16,7 @@ class Request:
     def __init__(self, app, data, client_address):
         self.app = app
         self.ip = client_address[0]
+        self.router = None
 
         splitted = data.split('\r\n\r\n', 1)
         headers = splitted[0]
@@ -71,6 +72,7 @@ class Request:
                 self.middleware = list(route["middleware"])
                 self.matches = list(route["matches"])
                 self.matchRoute = route["route"]
+                self.router = route["router"]
 
         # Put parameters in url in dictionary
         self.params = Params()

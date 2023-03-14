@@ -29,6 +29,9 @@ def omgitspost(request, response):
 def someMiddleware(request, response):
     request.hi = "Hello"
 
+def theOtherMiddleware(request, response):
+    request.hi = "No"
+
 app.get("/", get, someMiddleware)
 app.get("/:userId/:postId/comment", get, someMiddleware)
 app.get("/:userId/:postId/", redirectToComment)
@@ -42,9 +45,23 @@ app.all("/hihi", omgitspost)
 def hello(request, response):
     response.send("hi")
 
-@app.get("/test")
-@app.head("/test")
+@app.get("/test", None, someMiddleware)
+@app.head("/test", None, someMiddleware)
 def test(request, response):
+    response.append("Hi", request.hi)
     response.send("Hiii!!!")
+
+
+appRouter = app.router("/user")
+
+@appRouter.get("")
+@appRouter.get("/")
+@appRouter.get("/cheese")
+def omg(request, response):
+    response.append("Hi", request.hi)
+    response.send("omg!!!")
+
+appRouter.use(theOtherMiddleware)
+appRouter.use(someMiddleware, "/cheese")
 
 app.listen()

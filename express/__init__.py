@@ -2,6 +2,7 @@ import socket, re, traceback
 
 from express.request import Request
 from express.response import Response
+from express.router import Router
 
 
 class express:
@@ -16,9 +17,16 @@ class express:
             "PATCH": [],
             "*": []
         }
+        self.routers = []
+        self.globalMiddleware = {}
 
-    def _route(self, method, route, fun, *middleware):
+    def _route(self, method, route, fun, middleware = (), router = None):
+        middleware = list(middleware)
         originalRoute = "" + route
+
+        if len(middleware) > 0 and type(middleware[-1]) is int:
+            router = middleware[-1]
+            middleware.pop()
 
         matches = []
         parts = route.split("/")
@@ -41,8 +49,9 @@ class express:
         self.routes[method].append({
             "route": route,
             "fun": fun,
-            "middleware": list(middleware),
-            "matches": matches
+            "middleware": middleware,
+            "matches": matches,
+            "router": router
         })
 
     def _listen(self, port, backlog):
@@ -72,14 +81,15 @@ class express:
             self.handleConnection(client_socket, data, client_address)
 
     def listen(self, port=8080, backlog=10):
-        while True:
-            try:
-                self._listen(port, backlog)
-            except Exception as e:
-                print(traceback.format_exc())
-                print("Error!")
-                print(e)
-                pass
+        self._listen(port, backlog)
+        # while True:
+        #     try:
+        #         self._listen(port, backlog)
+        #     except Exception as e:
+        #         print(traceback.format_exc())
+        #         print("Error!")
+        #         print(e)
+        #         pass
 
     def notFound(self, response):
         response.status_code = 404
@@ -99,17 +109,52 @@ class express:
 
         # run middleware
         continue_to_route = True
-        for middleware in request.middleware:
-            try:
-                res = middleware(request, response)
-                if res is False:
-                    continue_to_route = False
+        for middleware in self.globalMiddleware:
+            if re.match(middleware, request.url):
+                for func in self.globalMiddleware[middleware]:
+                    try:
+                        res = func(request, response)
+                        if res is False:
+                            continue_to_route = False
+                            break
+                    except Exception as e:
+                        print(traceback.format_exc())
+                        print("Error!")
+                        print(e)
+                        return self.error(response)
+            if not continue_to_route:
+                break
+
+        if continue_to_route and request.router is not None:
+            router = self.routers[request.router]
+            for middleware in router.middleware:
+                if re.match(middleware, request.url):
+                    for func in router.middleware[middleware]:
+                        try:
+                            res = func(request, response)
+                            if res is False:
+                                continue_to_route = False
+                                break
+                        except Exception as e:
+                            print(traceback.format_exc())
+                            print("Error!")
+                            print(e)
+                            return self.error(response)
+                if not continue_to_route:
                     break
-            except Exception as e:
-                print(traceback.format_exc())
-                print("Error!")
-                print(e)
-                return self.error(response)
+
+        if continue_to_route:
+            for middleware in request.middleware:
+                try:
+                    res = middleware(request, response)
+                    if res is False:
+                        continue_to_route = False
+                        break
+                except Exception as e:
+                    print(traceback.format_exc())
+                    print("Error!")
+                    print(e)
+                    return self.error(response)
         
         if continue_to_route:
             try:
@@ -123,16 +168,16 @@ class express:
         if not response.headersSent:
             response.end()
 
-    def route(self, method, route, fun, *middleware):
+    def route(self, method, route, fun, *middleware, router = None):
         if callable(middleware):
             middleware = [middleware]
 
         if fun is None:
-            def get(function, *theRest):
-                self._route(method, route, function, *middleware)
+            def get(function):
+                self._route(method, route, function, middleware=middleware, router = router)
                 return function
             return get
-        self._route(method, route, fun, *middleware)
+        self._route(method, route, fun, middleware=middleware, router = router)
 
     def get(self, route, fun = None, *middleware):
         return self.route("GET", route, fun, *middleware)
@@ -154,3 +199,18 @@ class express:
     
     def all(self, route, fun = None, *middleware):
         return self.route("*", route, fun, *middleware)
+    
+    def router(self, route):
+        routerId = len(self.routers)
+        router = Router(self, route, routerId)
+        self.routers.append(router)
+        return router
+    
+    def use(self, fun, path = "/*"):
+        if "*" in path:
+            path.replace("*", "(.*)")
+            
+        try:
+            self.globalMiddleware[path].append(fun)
+        except:
+            self.globalMiddleware[path] = [fun]
