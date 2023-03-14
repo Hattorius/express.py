@@ -64,7 +64,7 @@ class Request:
 
         # Find route in list
         self.found = False
-        for route in app.routes[self.method]:
+        for route in app.routes[self.method] + app.routes["*"]:
             if re.match(route["route"], self.url):
                 self.found = True
                 self.fun = route["fun"]

@@ -13,7 +13,8 @@ class express:
             "POST": [],
             "PUT": [],
             "DELETE": [],
-            "PATCH": []
+            "PATCH": [],
+            "*": []
         }
 
     def _route(self, method, route, fun, *middleware):
@@ -145,3 +146,6 @@ class express:
 
     def patch(self, route, fun = None, *middleware):
         return self.route("PATCH", route, fun, *middleware)
+    
+    def all(self, route, fun = None, *middleware):
+        return self.route("*", route, fun, *middleware)
