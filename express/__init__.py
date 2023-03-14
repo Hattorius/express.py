@@ -98,20 +98,44 @@ class express:
         if not response.headersSent:
             response.send("Hello World!")
 
-    def get(self, route, fun, *middleware):
+    def get(self, route, fun = None, *middleware):
+        if fun is None:
+            def get(function):
+                self.route("GET", route, function, *middleware)
+            return get
         self.route("GET", route, fun, *middleware)
 
-    def post(self, route, fun, *middleware):
+    def post(self, route, fun = None, *middleware):
+        if fun is None:
+            def get(function):
+                self.route("POST", route, function, *middleware)
+            return get
         self.route("POST", route, fun, *middleware)
 
-    def head(self, route, fun, *middleware):
+    def head(self, route, fun = None, *middleware):
+        if fun is None:
+            def get(function):
+                self.route("HEAD", route, function, *middleware)
+            return get
         self.route("HEAD", route, fun, *middleware)
 
-    def put(self, route, fun, *middleware):
+    def put(self, route, fun = None, *middleware):
+        if fun is None:
+            def get(function):
+                self.route("PUT", route, function, *middleware)
+            return get
         self.route("PUT", route, fun, *middleware)
 
-    def delete(self, route, fun, *middleware):
+    def delete(self, route, fun = None, *middleware):
+        if fun is None:
+            def get(function):
+                self.route("DELETE", route, function, *middleware)
+            return get
         self.route("DELETE", route, fun, *middleware)
 
-    def patch(self, route, fun, *middleware):
+    def patch(self, route, fun = None, *middleware):
+        if fun is None:
+            def get(function):
+                self.route("PATCH", route, function, *middleware)
+            return get
         self.route("PATCH", route, fun, *middleware)

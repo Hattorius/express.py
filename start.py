@@ -36,4 +36,8 @@ app.get("/file", serveFile)
 app.get("/bad", badRequest)
 app.post("/", omgitspost)
 
+@app.get("/hello")
+def hello(request, response):
+    response.send("hi")
+
 app.listen()
