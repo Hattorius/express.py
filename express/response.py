@@ -1,6 +1,6 @@
 import time, json, os
 
-from express.helpers import url_encode, timeToDate, getMIMEFromFileType
+from express.helpers import url_encode, timeToDate, getMIMEFromFileType, getStatusText
 
 
 class Response:
@@ -10,15 +10,21 @@ class Response:
         self.request = request
         self.headers = []
         self.status_code = 200
-        self.status_text = "OK"
+        self.status_text = None
         self.content_type = "text/html"
 
         self.headersSent = False
 
     def send(self, data=""):
         if self.headersSent:
-            print("Headers were already sent, can't send again!")
-            exit()
+            raise Exception("Headers were already sent, can't send again!")
+
+        if self.status_text is None:
+            self.status_text = getStatusText(self.status_code)
+
+        if self.status_text is None:
+            self.status(500).send()
+            raise Exception("You must set a custom status text if the status code is custom")
 
         response = f"{self.request.protocol} {self.status_code} {self.status_text}\r\n"
 
@@ -56,9 +62,10 @@ class Response:
         if type(value) is list:
             for item in value:
                 self._append(field, item)
-            return
+            return self
         
         self._append(field, value)
+        return self
 
     def get(self, name):
         for header in self.headers:
@@ -101,6 +108,7 @@ class Response:
                         cookie += f"; Secure"
 
         self._append("Set-Cookie", cookie)
+        return self
 
     def clearCookie(self, name, options = {}):
         cookie = f"{name}="
@@ -130,6 +138,7 @@ class Response:
         cookie += "; Max-Age=-1"
 
         self._append("Set-Cookie", cookie)
+        return self
 
     def end(self):
         return self.send()
@@ -160,7 +169,7 @@ class Response:
         if referer is not None:
             return self.append("Location", referer)
 
-        self.append("Location", "/")
+        return self.append("Location", "/")
 
     def redirect(self, statusOrPath, path = None):
         if path is None:

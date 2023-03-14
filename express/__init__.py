@@ -16,8 +16,8 @@ class express:
             "PATCH": []
         }
 
-    def route(self, method, route, fun, *middleware):
-        originalRoute = route
+    def _route(self, method, route, fun, *middleware):
+        originalRoute = "" + route
 
         matches = []
         parts = route.split("/")
@@ -26,18 +26,15 @@ class express:
                 name = part.split(":")[1]
 
                 if name in matches:
-                    print("You've got multiple parameters with the same name!")
                     print("Method: %s" % method)
                     print("Route: %s" % originalRoute)
                     print("Parameter: %s" % name)
-                    exit()
+                    raise Exception("You've got multiple parameters with the same name!")
 
                 route = route.replace(part, "(.+)")
                 matches.append(name)
 
         route = f"^{route}$"
-
-        # print(re.search(route, "/6/654/comment").groups())
 
         self.routes[method].append({
             "route": route,
@@ -46,7 +43,7 @@ class express:
             "matches": matches
         })
 
-    def listen(self, port=8080, backlog=10):
+    def _listen(self, port, backlog):
         
         if socket.has_dualstack_ipv6():
             self.socket = socket.create_server(("", port), family=socket.AF_INET6, dualstack_ipv6=True)
@@ -71,6 +68,15 @@ class express:
                 continue
             
             self.handleConnection(client_socket, data, client_address)
+
+    def listen(self, port=8080, backlog=10):
+        while True:
+            try:
+                self._listen(port, backlog)
+            except Exception as e:
+                print("Error!")
+                print(e)
+                pass
 
     def notFound(self, response):
         response.status_code = 404
@@ -98,44 +104,30 @@ class express:
         if not response.headersSent:
             response.send("Hello World!")
 
-    def get(self, route, fun = None, *middleware):
+    def route(self, method, route, fun, *middleware):
+        if callable(middleware):
+            middleware = [middleware]
+
         if fun is None:
             def get(function):
-                self.route("GET", route, function, *middleware)
+                self._route(method, route, function, *middleware)
             return get
-        self.route("GET", route, fun, *middleware)
+        self._route(method, route, fun, *middleware)
+
+    def get(self, route, fun = None, *middleware):
+        return self.route("GET", route, fun, *middleware)
 
     def post(self, route, fun = None, *middleware):
-        if fun is None:
-            def get(function):
-                self.route("POST", route, function, *middleware)
-            return get
-        self.route("POST", route, fun, *middleware)
+        return self.route("POST", route, fun, *middleware)
 
     def head(self, route, fun = None, *middleware):
-        if fun is None:
-            def get(function):
-                self.route("HEAD", route, function, *middleware)
-            return get
-        self.route("HEAD", route, fun, *middleware)
+        return self.route("HEAD", route, fun, *middleware)
 
     def put(self, route, fun = None, *middleware):
-        if fun is None:
-            def get(function):
-                self.route("PUT", route, function, *middleware)
-            return get
-        self.route("PUT", route, fun, *middleware)
+        return self.route("PUT", route, fun, *middleware)
 
     def delete(self, route, fun = None, *middleware):
-        if fun is None:
-            def get(function):
-                self.route("DELETE", route, function, *middleware)
-            return get
-        self.route("DELETE", route, fun, *middleware)
+        return self.route("DELETE", route, fun, *middleware)
 
     def patch(self, route, fun = None, *middleware):
-        if fun is None:
-            def get(function):
-                self.route("PATCH", route, function, *middleware)
-            return get
-        self.route("PATCH", route, fun, *middleware)
+        return self.route("PATCH", route, fun, *middleware)
