@@ -29,13 +29,18 @@ class express:
             middleware.pop()
 
         route = route.replace(".", "\.")
+        route = route.replace("*", ".+")
 
         matches = []
         parts = route.split("/")
         for part in parts:
-            if re.match("^:.+$", part):
-                name = part.split(":")[1]
+            while True:
+                found = re.search("(:[^-]*)", part)
 
+                if not found:
+                    break
+
+                name = found.group(0).split(":")[1]
                 if name in matches:
                     print(traceback.format_exc())
                     print("Method: %s" % method)
@@ -43,8 +48,10 @@ class express:
                     print("Parameter: %s" % name)
                     raise Exception("You've got multiple parameters with the same name!")
 
-                route = route.replace(part, "(.+)")
+                route = route.replace(":" + name, "(.+)")
                 matches.append(name)
+
+                part = part.replace(":" + name, "")
 
         route = f"^{route}$"
 
