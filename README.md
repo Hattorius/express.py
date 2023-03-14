@@ -58,3 +58,6 @@ app.delete("/user", deleteUser)
 
 app.listen(3000)
 ```
+
+# More routing info
+If you want to read **all** of the routing API through the guide???? [click here](https://github.com/Hattorius/express.py/wiki/Guide---Routing)
