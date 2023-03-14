@@ -28,6 +28,8 @@ class express:
             router = middleware[-1]
             middleware.pop()
 
+        route = route.replace(".", "\.")
+
         matches = []
         parts = route.split("/")
         for part in parts:
