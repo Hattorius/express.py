@@ -35,7 +35,7 @@ class express:
         parts = route.split("/")
         for part in parts:
             while True:
-                found = re.search("(:[^-]*)", part)
+                found = re.search("(:[^-.]*)", part)
 
                 if not found:
                     break
@@ -48,10 +48,16 @@ class express:
                     print("Parameter: %s" % name)
                     raise Exception("You've got multiple parameters with the same name!")
 
-                route = route.replace(":" + name, "(.+)")
+                originalName = "" + name
+                regex = "(.+)"
+                if "(" in name and ")" in name:
+                    name, rest = name.split("(")
+                    regex = "(" + rest
+
+                route = route.replace(":" + originalName, regex)
                 matches.append(name)
 
-                part = part.replace(":" + name, "")
+                part = part.replace(":" + originalName, "")
 
         route = f"^{route}$"
 
