@@ -209,7 +209,7 @@ class express:
     def use(self, fun, path = "/*"):
         if "*" in path:
             path.replace("*", "(.*)")
-            
+
         try:
             self.globalMiddleware[path].append(fun)
         except:
