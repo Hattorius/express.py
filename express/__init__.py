@@ -80,8 +80,12 @@ class express:
 
     def notFound(self, response):
         response.status_code = 404
-        response.status_text = "Not Found"
-        response.send()
+        response.end()
+
+    def error(self, response):
+        if not response.headersSent:
+            response.status_code = 500
+            response.end()
 
     def handleConnection(self, socket, data, client_address):
         request = Request(self, data, client_address)
@@ -93,16 +97,26 @@ class express:
         # run middleware
         continue_to_route = True
         for middleware in request.middleware:
-            res = middleware(request, response)
-            if res is False:
-                continue_to_route = False
-                break
+            try:
+                res = middleware(request, response)
+                if res is False:
+                    continue_to_route = False
+                    break
+            except Exception as e:
+                print("Error!")
+                print(e)
+                return self.error(response)
         
         if continue_to_route:
-            request.fun(request, response)
+            try:
+                request.fun(request, response)
+            except Exception as e:
+                print("Error!")
+                print(e)
+                return self.error(response)
 
         if not response.headersSent:
-            response.send("Hello World!")
+            response.end()
 
     def route(self, method, route, fun, *middleware):
         if callable(middleware):
