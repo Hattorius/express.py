@@ -41,8 +41,9 @@ class Response:
         for header in self.headers:
             response += header[0] + ": " + header[1] + "\r\n"
         
-        response += "\r\n\r\n"
-        response += data
+        response += "\r\n"
+        if self.request.method != "HEAD":
+            response += "\r\n" + data
 
         self.socket.send(response.encode())
         self.socket.close()
