@@ -128,6 +128,21 @@ class express:
             self.error(response)
             return False
 
+    def runMiddlewaresAndEndpoint(self, middlewares, endpoint, request, response):
+        def next():
+            if request.middlewareCount < len(middlewares):
+                request.middlewareCount += 1
+                currentCount = request.middlewareCount
+                middlewares[request.middlewareCount - 1](request, response, next)
+                
+                if currentCount == request.middlewareCount:
+                    next()
+            else:
+                request.middlewareCount += 1
+                endpoint(request, response)
+        
+        next()
+
     def handleConnection(self, socket, data, client_address):
         request = Request(self, data, client_address)
         response = Response(self, socket, request)
@@ -135,42 +150,32 @@ class express:
         if not request.found:
             return self.notFound(response)
 
-        # run middleware
-        continue_to_route = True
+        middlewareToRun = []
+        
         for middleware in self.globalMiddleware:
             if re.match(middleware, request.url):
                 for func in self.globalMiddleware[middleware]:
-                    if not self.runMiddleware(func, request, response):
-                        continue_to_route = False
-                        break
-            if not continue_to_route:
-                break
+                    middlewareToRun.append(func)
 
-        if continue_to_route and request.router is not None:
+        if request.router is not None:
             router = self.routers[request.router]
             for middleware in router.middleware:
                 if re.match(middleware, request.url):
                     for func in router.middleware[middleware]:
-                        if not self.runMiddleware(func, request, response):
-                            continue_to_route = False
-                            break
-                if not continue_to_route:
-                    break
+                        middlewareToRun.append(func)
 
-        if continue_to_route:
-            for middleware in request.middleware:
-                if not self.runMiddleware(middleware, request, response):
-                    continue_to_route = False
-                    break
+        for middleware in request.middleware:
+            middlewareToRun.append(middleware)
         
-        if continue_to_route:
-            try:
-                request.fun(request, response)
-            except Exception as e:
-                print(traceback.format_exc())
-                print("Error!")
-                print(e)
-                return self.error(response)
+        self.runMiddlewaresAndEndpoint(middlewareToRun, request.fun, request, response)
+        # if continue_to_route:
+        #     try:
+        #         request.fun(request, response)
+        #     except Exception as e:
+        #         print(traceback.format_exc())
+        #         print("Error!")
+        #         print(e)
+        #         return self.error(response)
 
         if not response.headersSent:
             response.end()

@@ -17,6 +17,7 @@ class Request:
         self.app = app
         self.ip = client_address[0]
         self.router = None
+        self.middlewareCount = 0
 
         splitted = data.split('\r\n\r\n', 1)
         headers = splitted[0]
