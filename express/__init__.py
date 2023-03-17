@@ -138,6 +138,9 @@ class express:
 
     def runMiddlewaresAndEndpoint(self, middlewares, endpoint, request, response):
         def next():
+            if response.headersSent:
+                return
+
             if request.middlewareCount < len(middlewares):
                 request.middlewareCount += 1
                 currentCount = request.middlewareCount
