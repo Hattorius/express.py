@@ -115,6 +115,19 @@ class express:
             response.status_code = 500
             response.end()
 
+    def runMiddleware(self, middleware, request, response):
+        try:
+            res = middleware(request, response)
+            if res is False:
+                return False
+            return True
+        except Exception as e:
+            print(traceback.format_exc())
+            print("Error!")
+            print(e)
+            self.error(response)
+            return False
+
     def handleConnection(self, socket, data, client_address):
         request = Request(self, data, client_address)
         response = Response(self, socket, request)
@@ -127,16 +140,9 @@ class express:
         for middleware in self.globalMiddleware:
             if re.match(middleware, request.url):
                 for func in self.globalMiddleware[middleware]:
-                    try:
-                        res = func(request, response)
-                        if res is False:
-                            continue_to_route = False
-                            break
-                    except Exception as e:
-                        print(traceback.format_exc())
-                        print("Error!")
-                        print(e)
-                        return self.error(response)
+                    if not self.runMiddleware(func, request, response):
+                        continue_to_route = False
+                        break
             if not continue_to_route:
                 break
 
@@ -145,31 +151,17 @@ class express:
             for middleware in router.middleware:
                 if re.match(middleware, request.url):
                     for func in router.middleware[middleware]:
-                        try:
-                            res = func(request, response)
-                            if res is False:
-                                continue_to_route = False
-                                break
-                        except Exception as e:
-                            print(traceback.format_exc())
-                            print("Error!")
-                            print(e)
-                            return self.error(response)
+                        if not self.runMiddleware(func, request, response):
+                            continue_to_route = False
+                            break
                 if not continue_to_route:
                     break
 
         if continue_to_route:
             for middleware in request.middleware:
-                try:
-                    res = middleware(request, response)
-                    if res is False:
-                        continue_to_route = False
-                        break
-                except Exception as e:
-                    print(traceback.format_exc())
-                    print("Error!")
-                    print(e)
-                    return self.error(response)
+                if not self.runMiddleware(middleware, request, response):
+                    continue_to_route = False
+                    break
         
         if continue_to_route:
             try:
