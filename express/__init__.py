@@ -61,13 +61,22 @@ class express:
 
         route = f"^{route}$"
 
-        self.routes[method].append({
-            "route": route,
-            "fun": fun,
-            "middleware": middleware,
-            "matches": matches,
-            "router": router
-        })
+        try:
+            self.routes[method].append({
+                "route": route,
+                "fun": fun,
+                "middleware": middleware,
+                "matches": matches,
+                "router": router
+            })
+        except:
+            self.routes[method] = [{
+                "route": route,
+                "fun": fun,
+                "middleware": middleware,
+                "matches": matches,
+                "router": router
+            }]
 
     def _listen(self, port, backlog):
         
@@ -96,15 +105,14 @@ class express:
             self.handleConnection(client_socket, data, client_address)
 
     def listen(self, port=8080, backlog=10):
-        self._listen(port, backlog)
-        # while True:
-        #     try:
-        #         self._listen(port, backlog)
-        #     except Exception as e:
-        #         print(traceback.format_exc())
-        #         print("Error!")
-        #         print(e)
-        #         pass
+        while True:
+            try:
+                self._listen(port, backlog)
+            except Exception as e:
+                print(traceback.format_exc())
+                print("Error!")
+                print(e)
+                pass
 
     def notFound(self, response):
         response.status_code = 404
@@ -163,19 +171,8 @@ class express:
                 if re.match(middleware, request.url):
                     for func in router.middleware[middleware]:
                         middlewareToRun.append(func)
-
-        for middleware in request.middleware:
-            middlewareToRun.append(middleware)
         
-        self.runMiddlewaresAndEndpoint(middlewareToRun, request.fun, request, response)
-        # if continue_to_route:
-        #     try:
-        #         request.fun(request, response)
-        #     except Exception as e:
-        #         print(traceback.format_exc())
-        #         print("Error!")
-        #         print(e)
-        #         return self.error(response)
+        self.runMiddlewaresAndEndpoint(middlewareToRun + request.middleware, request.fun, request, response)
 
         if not response.headersSent:
             response.end()
