@@ -1,5 +1,5 @@
 # [express.py](https://pypi.org/project/web-express-py/)
-Python implementation of the widely used express.js
+Python implementation of the widely used express.js. This is without async! Will be adding it as soon as I'm done with my exams.
 
 # Why
 Going to answer this first: because yes. More out of boredom and wanting to do something with my time rather than playing games. But oh well, here it is.
